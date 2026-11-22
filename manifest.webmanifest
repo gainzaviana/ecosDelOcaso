@@ -1,0 +1,17 @@
+{
+  "name": "Ecos del Ocaso",
+  "short_name": "Ecos",
+  "description": "Un RPG táctico por turnos en pixel art para el móvil.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#120c1c",
+  "theme_color": "#120c1c",
+  "lang": "es",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

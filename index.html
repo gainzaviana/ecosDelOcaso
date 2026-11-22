@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#120c1c" />
+    <meta name="description" content="Ecos del Ocaso: un RPG táctico por turnos en pixel art para el móvil." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Ecos del Ocaso" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Ecos del Ocaso</title>
+  </head>
+  <body>
+    <main id="app">
+      <section id="title" hidden>
+        <canvas id="title-canvas" class="pixel" width="240" height="200"></canvas>
+        <div class="logo">
+          <h1>Ecos del Ocaso</h1>
+          <p class="subtitle">Una comunidad de héroes contra la sombra que despierta</p>
+        </div>
+        <nav id="title-menu" class="menu"></nav>
+      </section>
+
+      <section id="scene" hidden>
+        <canvas id="scene-canvas" class="pixel" width="240" height="150"></canvas>
+      </section>
+
+      <section id="map" hidden>
+        <header class="topbar">
+          <span id="map-title" class="topbar-title"></span>
+          <span id="map-gold" class="gold-chip"></span>
+          <button id="btn-menu" class="icon-btn" aria-label="Menú">☰</button>
+        </header>
+        <div class="map-wrap">
+          <canvas id="map-canvas" class="pixel" width="240" height="200"></canvas>
+          <div id="map-pins"></div>
+        </div>
+        <div id="node-panel" class="panel"></div>
+      </section>
+
+      <section id="battle" hidden>
+        <div id="timeline" class="timeline" aria-label="Orden de turnos"></div>
+        <div id="fellowship" class="fellowship"></div>
+        <canvas id="battle-canvas" class="pixel" width="240" height="150"></canvas>
+        <div id="hero-cards" class="hero-cards"></div>
+        <div id="commands" class="commands"></div>
+      </section>
+    </main>
+    <div id="dialogue" class="dialogue" hidden aria-live="polite"></div>
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>

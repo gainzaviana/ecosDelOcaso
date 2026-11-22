@@ -1,0 +1,10 @@
+{
+  "name": "ecos-del-ocaso",
+  "private": true,
+  "type": "module",
+  "description": "Ecos del Ocaso: un RPG táctico por turnos en pixel art para el móvil (PWA, sin dependencias).",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "start": "python3 -m http.server 8080"
+  }
+}
