@@ -9,7 +9,10 @@ import { heroStats } from "./engine.js";
 
 const BASE = 10000; // delay 100 at speed 1 → time units
 const FELLOW_MAX = 100;
-const STATUS_NAME = { poison: "Veneno", burn: "Quemadura", bleed: "Sangrado", blind: "Ceguera" };
+/** Altered states. Poison, burn and bleed hurt every turn; the rest change how the victim acts. */
+export const STATUS_NAME = { poison: "Veneno", burn: "Quemadura", bleed: "Sangrado", blind: "Ceguera", confuse: "Confusión", sleep: "Sueño", silence: "Silencio", fear: "Miedo" };
+/** Bosses shrug these off. */
+const BOSS_IMMUNE = ["sleep", "confuse"];
 const STATUS_PCT = { poison: 0.06, burn: 0.09, bleed: 0.05 };
 
 // MARK: Setup
@@ -112,7 +115,8 @@ export function heroSkills(b, u) {
   return u.skills.map((id) => {
     const s = SKILLS[id];
     let why;
-    if (u.ap < s.ap) why = `Necesitas ${s.ap} AP`;
+    if (u.statuses.silence) why = "Silenciado: no puede usar habilidades";
+    else if (u.ap < s.ap) why = `Necesitas ${s.ap} AP`;
     else if (s.target === "deadAlly" && !heroes(b, false).some((x) => !x.alive)) why = "Nadie ha caído";
     return { id, skill: s, why };
   });
@@ -148,6 +152,7 @@ export function advance(b) {
     ev.push({ t: "turn", uid: u.uid });
     startOfTurn(b, u, ev);
     if (checkEnd(b, ev)) return ev;
+    if (u.alive && lostTurn(b, u, ev)) { if (checkEnd(b, ev)) return ev; continue; }
     if (u.alive) return ev;
   }
   return ev;
@@ -169,6 +174,34 @@ function startOfTurn(b, u, ev) {
   if (u.side === "hero") gainAp(u, u.apRegen, ev, true);
 }
 
+/**
+ * Sleep skips the turn (a hit wakes the sleeper); confusion makes the victim lash out at a random
+ * fighter, friend or foe, half the time. Returns true when the turn was used up.
+ */
+function lostTurn(b, u, ev) {
+  const st = u.statuses;
+  if (st.sleep) {
+    ev.push({ t: "status", uid: u.uid, text: "Dormido", sleep: true });
+    if (--st.sleep.turns <= 0) delete st.sleep;
+    u.charging = null;
+    endTurn(b, u, 100);
+    return true;
+  }
+  if (st.confuse && b.rand() < 0.5) {
+    const pool = fighting(b).filter((x) => x.uid !== u.uid);
+    const t = pool[Math.floor(b.rand() * pool.length)];
+    ev.push({ t: "status", uid: u.uid, text: "Confundido", confuse: true });
+    if (t) {
+      ev.push({ t: "attack", uid: u.uid, target: t.uid, name: "Golpe confuso" });
+      strike(b, u, t, { power: 0.9, stat: u.side === "hero" && u.attackType === "luz" ? "mag" : "atk", type: u.side === "hero" ? u.attackType : u.skills[0]?.type ?? "contundente" }, ev);
+    }
+    u.charging = null;
+    endTurn(b, u, 100);
+    return true;
+  }
+  return false;
+}
+
 /** End of the acting unit's turn: tick its timed effects and schedule its next turn. */
 function endTurn(b, u, delay = 100) {
   u.next = b.time + (delay * BASE) / 100 / spdEff(u);
@@ -176,6 +209,7 @@ function endTurn(b, u, delay = 100) {
   u.buffs = u.buffs.filter((x) => x.turns > 0);
   for (const k of ["haste", "slow", "taunt", "counter", "evade"]) if (u[k] > 0) u[k]--;
   if (u.imbue && --u.imbue.turns <= 0) u.imbue = null;
+  for (const k of ["blind", "confuse", "silence", "fear"]) if (u.statuses[k] && --u.statuses[k].turns <= 0) delete u.statuses[k];
 }
 
 function checkEnd(b, ev) {
@@ -223,6 +257,7 @@ export function act(b, action) {
     case "skill": {
       const s = SKILLS[action.skill];
       if (!s || !u.skills.includes(action.skill)) return { error: "No conoces esa habilidad." };
+      if (u.statuses.silence) return { error: "Está silenciado: solo puede atacar, defender o usar objetos." };
       if (u.ap < s.ap) return { error: `Necesitas ${s.ap} AP.` };
       const targets = resolveTargets(b, u, s.target, action.target);
       if (!targets) return { error: "Elige un objetivo." };
@@ -363,6 +398,8 @@ export function enemyAct(b) {
 }
 
 function pickSkill(b, u) {
+  // Silenced: only plain attacks (no charges, no special effects).
+  if (u.statuses.silence) return u.skills.find((s) => s.power && !s.charge && !s.effects && s.target === "hero") ?? { name: "Golpe", power: 0.9, stat: "atk", type: u.skills[0]?.type ?? "contundente", target: "hero", weight: 1 };
   const opts = u.skills.filter((s) => {
     if (s.effects?.some((e) => e.do === "healSelf") && u.hp > u.hpMax * 0.7) return false;
     if (s.target === "self" && s.effects?.some((e) => e.do === "buff") && u.buffs.some((x) => x.mult > 1)) return false;
@@ -418,6 +455,7 @@ function strike(b, u, t, s, ev) {
   const crit = b.rand() * 100 < (u.crit ?? 5) + (s.crit ?? 0);
   if (crit) dmg *= 1.6;
   if (t.defending) dmg *= 0.5;
+  if (u.statuses.fear) dmg *= 0.7;
   dmg = Math.max(1, Math.round(dmg * (0.92 + b.rand() * 0.16)));
   ev.push({ t: "damage", uid: t.uid, amount: dmg, crit, weak, resist: resisted, type });
   if (u.side === "hero" && t.side === "enemy") {
@@ -443,6 +481,7 @@ function interrupt(t, ev) {
 
 function hurt(b, t, dmg, ev, opts = {}) {
   t.hp = Math.max(0, t.hp - dmg);
+  if (t.statuses.sleep && !opts.dot && t.hp > 0) { delete t.statuses.sleep; ev.push({ t: "status", uid: t.uid, text: "¡Despierta!", good: true }); }
   if (opts.dot) ev.push({ t: "damage", uid: t.uid, amount: dmg, dot: true });
   if (t.hp > 0) { if (t.boss) checkPhase(b, t, ev); return; }
   // Lágrima Estelar: revive once.
@@ -503,8 +542,10 @@ function applyEffect(b, u, t, e, s, ev) {
     }
     case "status": {
       if (b.rand() > (e.chance ?? 1)) break;
-      t.statuses[e.kind] = { turns: e.turns };
-      ev.push({ t: "status", uid: t.uid, text: STATUS_NAME[e.kind], good: false });
+      if (t.boss && BOSS_IMMUNE.includes(e.kind)) { ev.push({ t: "status", uid: t.uid, text: "Inmune", good: true }); break; }
+      t.statuses[e.kind] = { turns: Math.max(e.turns, t.statuses[e.kind]?.turns ?? 0) };
+      if (e.kind === "sleep" || e.kind === "silence") interrupt(t, ev);
+      ev.push({ t: "status", uid: t.uid, text: STATUS_NAME[e.kind], good: false, kind: e.kind });
       break;
     }
     case "haste": case "slow": {

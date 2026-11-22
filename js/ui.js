@@ -1,7 +1,7 @@
 // DOM screens and menus (mobile-first, thumb-friendly). The canvases inside them are drawn by
 // pixelRenderer.js; game rules live in combat.js / engine.js.
 
-import { ATTRS, ATTR_HELP, ATTR_NAME, DMG, FUTURE_HEROES, GEAR, HEROES, ITEMS, RUNES, SKILLS, TIER_AT, TRAIT_AT, activeTraits, totalMastery, traitTier, unlockedSkills } from "./characters.js";
+import { ATTRS, ATTR_HELP, ATTR_NAME, DMG, PHYSICAL, FUTURE_HEROES, GEAR, HEROES, ITEMS, RUNES, SKILLS, TIER_AT, TRAIT_AT, activeTraits, totalMastery, traitTier, unlockedSkills } from "./characters.js";
 import { ENEMIES } from "./enemies.js";
 import { act, canCombo, current, enemies, heroSkills, heroes, reserve, targetsFor, timeline } from "./combat.js";
 import { allocate, buy, describeSave, equip, heroStats, socketCount, socketRune, unsocketRune, xpToNext } from "./engine.js";
@@ -100,6 +100,7 @@ export function say(who, text) {
  */
 export async function runBattle(b, g, { resume = false, onProgress } = {}) {
   show("battle");
+  window.scrollTo(0, 0);
   const cv = $("#battle-canvas");
   const view = new BattleView(cv);
   view.setBattle(b);
@@ -169,13 +170,35 @@ function renderHeroes(b) {
     ...reserve(b).map((u) => h("div", { class: `hero-card reserve${u.alive ? "" : " ko"}` }, h("img", { class: "hc-face", src: portrait(u.id, 32), alt: "" }), h("div", { class: "hc-col" }, h("div", { class: "hc-name" }, `${u.name} · reserva`), bar(u.hp, u.hpMax, "hp", "PV")))));
 }
 
+/** Icons for altered states (hero cards, target lists). */
+const STATUS_ICON = { poison: "☠", burn: "🔥", bleed: "🩸", blind: "🌑", confuse: "🌀", sleep: "💤", silence: "🔇", fear: "😱" };
+
+/** How a damage type fares against an enemy: "weak", "resist" or null. */
+const matchup = (e, type) => (!type ? null : e.weak.includes(type) ? "weak" : e.resist.includes(type) ? "resist" : null);
+/** A hero's basic attack type (the Brasa rune turns physical blows into fire). */
+const attackTypeOf = (u) => (u.imbue && PHYSICAL.includes(u.attackType) ? u.imbue.type : u.attackType);
+/** "¡Eficaz!" tag when a damage type hits some enemy's weakness. */
+function effTag(b, type) {
+  if (!type) return null;
+  const weakFoes = enemies(b).filter((e) => e.weak.includes(type));
+  return weakFoes.length ? h("span", { class: "eff-tag" }, `${typeIcon(type)} ¡Eficaz!`) : null;
+}
+
 function statusIcons(u) {
   const out = [];
   if (u.haste > 0) out.push("»"); if (u.slow > 0) out.push("«");
-  if (u.statuses.poison) out.push("☠"); if (u.statuses.burn) out.push("🔥"); if (u.statuses.bleed) out.push("🩸");
+  for (const [k, icon] of Object.entries(STATUS_ICON)) if (u.statuses[k]) out.push(icon);
   if (u.buffs.some((x) => x.stat === "atk" && x.mult > 1)) out.push("⚔▲"); if (u.buffs.some((x) => x.stat === "def" && x.mult > 1)) out.push("🛡▲");
   if (u.taunt > 0) out.push("❗"); if (u.counter > 0) out.push("↺"); if (u.defending) out.push("🛡");
   return out.length ? h("span", { class: "hc-st" }, out.join(" ")) : null;
+}
+
+function statusHint(u) {
+  const t = [];
+  if (u.statuses.confuse) t.push("🌀 Confusión: la mitad de las veces ataca a cualquiera");
+  if (u.statuses.fear) t.push("😱 Miedo: hace un 30 % menos de daño");
+  if (u.statuses.blind) t.push("🌑 Ceguera: falla a menudo los ataques físicos");
+  return `${u.name} — ${t.join(" · ")}. El Musgo Limpio o Purificar lo curan.`;
 }
 
 /** The command menu for the current hero; resolves with an action. */
@@ -183,17 +206,24 @@ function chooseAction(b, g, view, ui) {
   return new Promise((resolve) => {
     const u = current(b);
     const panel = $("#commands");
-    const done = (a) => { view.cv.onclick = null; resolve(a); };
-    const knownWeak = (e) => [...new Set([...(g.bestiary[e.id] ?? []), ...(b.discovered[e.id] ?? [])])];
+    const done = (a) => { view.cv.onclick = null; view.hintType = null; resolve(a); };
 
-    const pickTarget = (kind, label, then) => {
+    const pickTarget = (kind, label, then, type) => {
       const list = targetsFor(b, kind);
+      view.hintType = kind === "enemy" ? type ?? null : null;
       if (list.length === 1 && kind !== "deadAlly") return then(list[0].uid);
       panel.replaceChildren(
         h("div", { class: "cmd-title" }, `${label}: elige objetivo`),
-        h("div", { class: "cmd-list" }, ...list.map((t) => h("button", { class: `cmd ${t.side}`, onclick: () => then(t.uid), onpointerenter: () => { view.selected = t.uid; } },
-          h("span", { class: "cmd-main" }, t.name, t.charging ? " ⚠" : ""),
-          h("span", { class: "cmd-sub" }, `${t.hp}/${t.hpMax} PV`, t.side === "enemy" && knownWeak(t).length ? ` · débil: ${knownWeak(t).map(typeIcon).join(" ")}` : "")))),
+        h("div", { class: "cmd-list" }, ...list.map((t) => {
+          const m = t.side === "enemy" ? matchup(t, type) : null;
+          const sts = Object.keys(t.statuses).map((k) => STATUS_ICON[k]).filter(Boolean).join("");
+          return h("button", { class: `cmd ${t.side}${m ? ` ${m}` : ""}`, onclick: () => then(t.uid), onpointerenter: () => { view.selected = t.uid; } },
+            h("span", { class: "cmd-main" }, h("span", null, t.name, t.charging ? " ⚠" : "", sts ? ` ${sts}` : ""),
+              m === "weak" ? h("span", { class: "eff-tag" }, `${typeIcon(type)} ¡Débil!`) : m === "resist" ? h("span", { class: "res-tag" }, `${typeIcon(type)} Resiste`) : null),
+            h("span", { class: "cmd-sub" }, `${t.hp}/${t.hpMax} PV`,
+              t.side === "enemy" && t.weak.length ? ` · débil a ${t.weak.map(typeIcon).join(" ")}` : "",
+              t.side === "enemy" && t.resist.length ? ` · resiste ${t.resist.map(typeIcon).join(" ")}` : ""));
+        })),
         h("button", { class: "cmd back", onclick: root }, "← Volver"));
       view.selected = list[0]?.uid ?? null;
       view.cv.onclick = (ev) => {
@@ -213,8 +243,8 @@ function chooseAction(b, g, view, ui) {
           const info = HEROES[u.id].cats.find((x) => x.id === c);
           return h("button", { class: `tab${c === cat ? " on" : ""}`, onclick: () => skillsMenu(c) }, info ? `${info.icon} ${info.name}` : c === "rasgos" ? "★ Definitiva" : c);
         })),
-        h("div", { class: "cmd-list" }, ...all.filter((x) => x.skill.cat === cat).map(({ id, skill, why }) => h("button", { class: "cmd skill", disabled: !!why, onclick: () => useSkill(id) },
-          h("span", { class: "cmd-main" }, `${typeIcon(skill.type)} ${skill.name}`, h("span", { class: "ap-cost" }, `${skill.ap} AP`)),
+        h("div", { class: "cmd-list" }, ...all.filter((x) => x.skill.cat === cat).map(({ id, skill, why }) => h("button", { class: `cmd skill${!why && effTag(b, skill.type) ? " eff" : ""}`, disabled: !!why, onclick: () => useSkill(id), onpointerenter: () => { view.hintType = skill.type ?? null; } },
+          h("span", { class: "cmd-main" }, h("span", null, `${typeIcon(skill.type)} ${skill.name}`), h("span", { class: "tags" }, effTag(b, skill.type), h("span", { class: "ap-cost" }, `${skill.ap} AP`))),
           h("span", { class: "cmd-sub" }, why ?? skill.text)))),
         hs && HEROES[u.id].cats.some((c) => c.id === cat) ? h("div", { class: "mastery-line" }, masteryText(u.id, cat, hs.mastery[cat] + (b.mastery[u.id]?.[cat] ?? 0))) : null,
         h("button", { class: "cmd back", onclick: root }, "← Volver"));
@@ -222,7 +252,7 @@ function chooseAction(b, g, view, ui) {
 
     const useSkill = (id) => {
       const s = SKILLS[id];
-      if (["enemy", "ally", "deadAlly"].includes(s.target)) pickTarget(s.target, s.name, (t) => done({ kind: "skill", skill: id, target: t }));
+      if (["enemy", "ally", "deadAlly"].includes(s.target)) pickTarget(s.target, s.name, (t) => done({ kind: "skill", skill: id, target: t }), s.type);
       else done({ kind: "skill", skill: id });
     };
 
@@ -244,18 +274,21 @@ function chooseAction(b, g, view, ui) {
     function root() {
       view.selected = null;
       view.cv.onclick = null;
+      const atkType = attackTypeOf(u);
+      view.hintType = atkType;
       const foes = enemies(b);
       const reserveReady = reserve(b).some((r) => r.alive);
       panel.replaceChildren(
         h("div", { class: "cmd-title" }, h("span", { style: { color: u.color } }, u.name), ` · ${u.ap}/${u.apMax} AP`),
         h("div", { class: "cmd-grid" },
-          h("button", { class: "cmd big attack", onclick: () => pickTarget("enemy", "Atacar", (t) => done({ kind: "attack", target: t })) }, h("span", { class: "cmd-main" }, `${typeIcon(u.attackType)} Atacar`), h("span", { class: "cmd-sub" }, "+1 AP")),
-          h("button", { class: "cmd big", onclick: () => skillsMenu() }, h("span", { class: "cmd-main" }, "✦ Habilidades"), h("span", { class: "cmd-sub" }, `${heroSkills(b, u).filter((x) => !x.why).length} disponibles`)),
+          h("button", { class: `cmd big attack${effTag(b, atkType) ? " eff" : ""}`, onclick: () => pickTarget("enemy", "Atacar", (t) => done({ kind: "attack", target: t }), atkType) }, h("span", { class: "cmd-main" }, `${typeIcon(atkType)} Atacar`), h("span", { class: "cmd-sub" }, effTag(b, atkType) ?? "+1 AP")),
+          h("button", { class: "cmd big", disabled: !!u.statuses.silence, onclick: () => { view.hintType = null; skillsMenu(); } }, h("span", { class: "cmd-main" }, "✦ Habilidades"), h("span", { class: "cmd-sub" }, u.statuses.silence ? "🔇 Silenciado" : `${heroSkills(b, u).filter((x) => !x.why).length} disponibles`)),
           h("button", { class: "cmd big", onclick: () => done({ kind: "defend" }) }, h("span", { class: "cmd-main" }, "🛡 Defender"), h("span", { class: "cmd-sub" }, "½ daño · +4 AP")),
           h("button", { class: "cmd big", onclick: itemsMenu }, h("span", { class: "cmd-main" }, "🎒 Objetos"), h("span", { class: "cmd-sub" }, `${Object.values(b.inventory.items).reduce((a, n) => a + n, 0)} en la bolsa`)),
           reserveReady ? h("button", { class: "cmd big", onclick: swapMenu }, h("span", { class: "cmd-main" }, "⇄ Cambiar"), h("span", { class: "cmd-sub" }, "trae a un héroe de reserva")) : null,
           canCombo(b) ? h("button", { class: "cmd big combo", onclick: () => done({ kind: "combo" }) }, h("span", { class: "cmd-main" }, "★ Ataque de la Comunidad"), h("span", { class: "cmd-sub" }, "todo el grupo a la vez")) : null,
         ),
+        Object.keys(u.statuses).some((k) => ["confuse", "fear", "blind"].includes(k)) ? h("div", { class: "hint" }, statusHint(u)) : null,
         foes.some((f) => f.charging) ? h("div", { class: "hint" }, `⚠ ${foes.filter((f) => f.charging).map((f) => f.name).join(", ")} está cargando: interrúmpelo con un golpe contundente o un aturdimiento.`) : null);
     }
     root();

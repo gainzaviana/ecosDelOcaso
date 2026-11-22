@@ -30,7 +30,14 @@ En las hogueras hay además tres ranuras de guardado manual.
   aturdimientos y retrasos mueven a los combatientes por la línea en tiempo real. Los enemigos
   telegrafían sus ataques cargados (⚠) y un golpe contundente o un aturdimiento los interrumpe.
 - **Debilidades**: Cortante, Perforante, Contundente, Fuego, Luz y Sombra. Golpear una debilidad
-  hace más daño, llena antes la barra de la **Comunidad** y se recuerda para siguientes combates.
+  hace más daño y llena antes la barra de la **Comunidad**. Bajo la vida de cada enemigo se ven los
+  iconos de sus debilidades. Si el ataque o la habilidad que vas a usar es eficaz, el enemigo brilla
+  con el color del elemento y el botón muestra «¡Eficaz!»; si lo resiste, aparece tachado.
+- **Estados alterados**: Veneno, Quemadura y Sangrado (dañan cada turno), Ceguera (falla ataques
+  físicos), Confusión (la mitad de las veces ataca a cualquiera, aliado o enemigo), Sueño (pierde
+  turnos hasta recibir un golpe), Silencio (no puede usar habilidades) y Miedo (−30 % de daño). Los
+  jefes son inmunes al Sueño y a la Confusión. Héroes y enemigos tienen ataques que los provocan; el
+  Musgo Limpio y Purificar los curan.
 - **Ataque de la Comunidad**: con la barra llena, todo el grupo ataca a la vez.
 - **Grupo de 3 + reserva**: con «Cambiar» entra un héroe de reserva en mitad del combate.
 - **Maestría por uso**: cada héroe tiene dos categorías de habilidades (5 niveles cada una) que se

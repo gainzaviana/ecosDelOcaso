@@ -41,9 +41,9 @@ export const SKILLS = {
   // Valen — Artes de Espada
   "tajo-firme": { name: "Tajo Firme", cat: "espada", ap: 3, stat: "atk", power: 1.45, type: "cortante", target: "enemy", text: "Un corte preciso y potente." },
   "rompeescudos": { name: "Golpe Rompeescudos", cat: "espada", ap: 5, stat: "atk", power: 1.2, type: "contundente", target: "enemy", effects: [{ do: "interrupt" }, { do: "debuff", stat: "def", mult: 0.7, turns: 3 }], text: "Golpe con el pomo: interrumpe cargas y baja la defensa." },
-  "doble-corte": { name: "Doble Corte", cat: "espada", ap: 6, stat: "atk", power: 0.95, hits: 2, type: "cortante", target: "enemy", text: "Dos tajos encadenados." },
+  "doble-corte": { name: "Doble Corte", cat: "espada", ap: 6, stat: "atk", power: 0.95, hits: 2, type: "cortante", target: "enemy", effects: [{ do: "status", kind: "bleed", chance: 0.5, turns: 3 }], text: "Dos tajos encadenados. 50 %: Sangrado." },
   "contragolpe": { name: "Postura de Contragolpe", cat: "espada", ap: 5, target: "self", delay: 70, effects: [{ do: "counter", turns: 2 }, { do: "buff", stat: "def", mult: 1.3, turns: 2 }], text: "Responde a cada golpe físico con un contraataque." },
-  "juicio-acero": { name: "Juicio de Acero", cat: "espada", ap: 10, stat: "atk", power: 2.6, type: "cortante", target: "enemy", delay: 120, text: "El golpe definitivo de un capitán." },
+  "juicio-acero": { name: "Juicio de Acero", cat: "espada", ap: 10, stat: "atk", power: 2.6, type: "cortante", target: "enemy", delay: 120, effects: [{ do: "status", kind: "fear", chance: 0.7, turns: 3 }], text: "El golpe definitivo de un capitán. 70 %: Miedo." },
   // Valen — Liderazgo
   "grito-batalla": { name: "Grito de Batalla", cat: "liderazgo", ap: 5, target: "allAllies", effects: [{ do: "buff", stat: "atk", mult: 1.25, turns: 3 }], text: "+25 % de ataque al grupo durante 3 turnos." },
   "firmes": { name: "¡Firmes!", cat: "liderazgo", ap: 5, target: "allAllies", effects: [{ do: "buff", stat: "def", mult: 1.3, turns: 3 }], text: "+30 % de defensa al grupo durante 3 turnos." },
@@ -54,15 +54,15 @@ export const SKILLS = {
 
   // Elowen — Luz Espiritual
   "luz-sanadora": { name: "Luz Sanadora", cat: "luz", ap: 4, stat: "mag", target: "ally", effects: [{ do: "heal", power: 1.15 }], text: "Cura a un compañero." },
-  "destello": { name: "Destello", cat: "luz", ap: 4, stat: "mag", power: 1.35, type: "luz", target: "enemy", text: "Un haz de luz pura." },
+  "destello": { name: "Destello", cat: "luz", ap: 4, stat: "mag", power: 1.35, type: "luz", target: "enemy", effects: [{ do: "status", kind: "blind", chance: 0.4, turns: 3 }], text: "Un haz de luz pura. 40 %: Ceguera." },
   "aura-protectora": { name: "Aura Protectora", cat: "luz", ap: 6, target: "allAllies", effects: [{ do: "buff", stat: "res", mult: 1.4, turns: 3 }, { do: "buff", stat: "def", mult: 1.15, turns: 3 }], text: "Protege al grupo de la magia y los golpes." },
   "renacer": { name: "Renacer", cat: "luz", ap: 10, target: "deadAlly", effects: [{ do: "revive", pct: 0.4 }], text: "Devuelve a la vida a un compañero caído con el 40 % de vida." },
   "estrella-alba": { name: "Estrella del Alba", cat: "luz", ap: 12, stat: "mag", power: 1.6, type: "luz", target: "allEnemies", delay: 120, text: "Luz cegadora sobre todos los enemigos." },
   // Elowen — Canto Élfico
   "canto-veloz": { name: "Canto Veloz", cat: "canto", ap: 4, target: "ally", effects: [{ do: "haste", turns: 3 }], text: "Prisa: el compañero actúa más a menudo." },
-  "lamento-lento": { name: "Lamento Lento", cat: "canto", ap: 4, target: "enemy", effects: [{ do: "slow", turns: 3 }], text: "Lentitud: el enemigo actúa menos a menudo." },
-  "purificar": { name: "Purificar", cat: "canto", ap: 3, stat: "mag", target: "ally", effects: [{ do: "cleanse" }, { do: "heal", power: 0.6 }], text: "Quita venenos y quemaduras y cura un poco." },
-  "sello-estelar": { name: "Sello Estelar", cat: "canto", ap: 7, target: "enemy", effects: [{ do: "stun" }, { do: "interrupt" }], text: "Aturde: el enemigo pierde su turno y su carga." },
+  "lamento-lento": { name: "Nana Élfica", cat: "canto", ap: 4, target: "enemy", effects: [{ do: "slow", turns: 3 }, { do: "status", kind: "sleep", chance: 0.6, turns: 3 }], text: "Lentitud y 60 %: Sueño (duerme hasta recibir un golpe)." },
+  "purificar": { name: "Purificar", cat: "canto", ap: 3, stat: "mag", target: "ally", effects: [{ do: "cleanse" }, { do: "heal", power: 0.6 }], text: "Cura todos los estados alterados y un poco de vida." },
+  "sello-estelar": { name: "Sello Estelar", cat: "canto", ap: 7, target: "enemy", effects: [{ do: "stun" }, { do: "interrupt" }, { do: "status", kind: "silence", chance: 1, turns: 3 }], text: "Aturde y Silencia: pierde su turno, su carga y sus habilidades." },
   "coro-estrellas": { name: "Coro de Estrellas", cat: "canto", ap: 12, stat: "mag", target: "allAllies", effects: [{ do: "heal", power: 0.75 }, { do: "regen", turns: 3 }], text: "Cura a todo el grupo y lo regenera." },
   "lluvia-estrellas": { name: "Lluvia de Estrellas", cat: "rasgos", ap: 14, stat: "mag", power: 2.0, type: "luz", target: "allEnemies", effects: [{ do: "slow", turns: 2 }], text: "Definitiva: estrellas sobre todos los enemigos, que quedan ralentizados." },
 
@@ -84,7 +84,7 @@ export const SKILLS = {
   "hachazo": { name: "Hachazo", cat: "hacha", ap: 3, stat: "atk", power: 1.5, type: "cortante", target: "enemy", text: "Un golpe de hacha brutal." },
   "quebrantahuesos": { name: "Quebrantahuesos", cat: "hacha", ap: 5, stat: "atk", power: 1.3, type: "contundente", target: "enemy", effects: [{ do: "interrupt" }, { do: "debuff", stat: "def", mult: 0.65, turns: 3 }], text: "Interrumpe cargas y rompe la armadura." },
   "torbellino": { name: "Torbellino", cat: "hacha", ap: 6, stat: "atk", power: 0.95, type: "cortante", target: "allEnemies", text: "Gira el hacha contra todos los enemigos." },
-  "golpe-sismico": { name: "Golpe Sísmico", cat: "hacha", ap: 8, stat: "atk", power: 1.15, type: "contundente", target: "allEnemies", effects: [{ do: "delay", amount: 30 }, { do: "interrupt" }], text: "Hace temblar el suelo: retrasa e interrumpe a todos." },
+  "golpe-sismico": { name: "Golpe Sísmico", cat: "hacha", ap: 8, stat: "atk", power: 1.15, type: "contundente", target: "allEnemies", effects: [{ do: "delay", amount: 30 }, { do: "interrupt" }, { do: "status", kind: "confuse", chance: 0.4, turns: 2 }], text: "Hace temblar el suelo: retrasa e interrumpe a todos. 40 %: Confusión." },
   "furia-hondaforja": { name: "Furia de Hondaforja", cat: "hacha", ap: 10, stat: "atk", power: 2.8, type: "contundente", target: "enemy", delay: 120, text: "Toda la fuerza de un herrero enano." },
   // Bram — Forja Rúnica
   "runa-brasa": { name: "Runa de Brasa", cat: "forja", ap: 4, target: "ally", effects: [{ do: "imbue", type: "fuego", turns: 3 }, { do: "buff", stat: "atk", mult: 1.15, turns: 3 }], text: "Los ataques del compañero arden (Fuego) durante 3 turnos." },
@@ -95,22 +95,22 @@ export const SKILLS = {
   "ira-montana": { name: "Ira de la Montaña", cat: "rasgos", ap: 14, stat: "atk", power: 2.0, type: "contundente", target: "allEnemies", effects: [{ do: "interrupt" }, { do: "stun", chance: 0.4 }], text: "Definitiva: la montaña entera cae sobre los enemigos." },
 
   // Freya — Arte del Escudo
-  "golpe-escudo": { name: "Golpe de Escudo", cat: "escudo", ap: 3, stat: "atk", power: 1.1, type: "contundente", target: "enemy", effects: [{ do: "interrupt" }], text: "Interrumpe cargas." },
+  "golpe-escudo": { name: "Golpe de Escudo", cat: "escudo", ap: 3, stat: "atk", power: 1.1, type: "contundente", target: "enemy", effects: [{ do: "interrupt" }, { do: "status", kind: "confuse", chance: 0.35, turns: 2 }], text: "Interrumpe cargas. 35 %: Confusión." },
   "cobertura": { name: "Cobertura", cat: "escudo", ap: 4, target: "allAllies", effects: [{ do: "buff", stat: "def", mult: 1.2, turns: 2 }], text: "+20 % de defensa al grupo." },
   "muro-escudos": { name: "Muro de Escudos", cat: "escudo", ap: 6, target: "allAllies", effects: [{ do: "buff", stat: "def", mult: 1.4, turns: 2 }, { do: "buff", stat: "res", mult: 1.2, turns: 2 }], text: "Una muralla de escudos para todo el grupo." },
   "desafio": { name: "Desafío", cat: "escudo", ap: 5, target: "self", delay: 80, effects: [{ do: "taunt", turns: 3 }, { do: "counter", turns: 3 }], text: "Provoca a los enemigos y devuelve cada golpe." },
   "egida-doncella": { name: "Égida de la Doncella", cat: "escudo", ap: 12, target: "allAllies", effects: [{ do: "buff", stat: "def", mult: 1.5, turns: 3 }, { do: "buff", stat: "res", mult: 1.5, turns: 3 }, { do: "regen", turns: 3 }], text: "Protección total y regeneración." },
   // Freya — Lanza
   "estocada": { name: "Estocada", cat: "lanza", ap: 3, stat: "atk", power: 1.4, type: "perforante", target: "enemy", text: "Una estocada certera." },
-  "rompefilas": { name: "Lanza Rompefilas", cat: "lanza", ap: 5, stat: "atk", power: 0.9, type: "perforante", target: "allEnemies", text: "Atraviesa la fila enemiga." },
+  "rompefilas": { name: "Lanza Rompefilas", cat: "lanza", ap: 5, stat: "atk", power: 0.9, type: "perforante", target: "allEnemies", effects: [{ do: "status", kind: "fear", chance: 0.3, turns: 2 }], text: "Atraviesa la fila enemiga. 30 %: Miedo." },
   "barrido": { name: "Barrido", cat: "lanza", ap: 5, stat: "atk", power: 1.1, type: "perforante", target: "enemy", effects: [{ do: "slow", turns: 2 }], text: "Barre las piernas: lentitud." },
-  "ensarte": { name: "Ensarte", cat: "lanza", ap: 8, stat: "atk", power: 2.1, crit: 25, type: "perforante", target: "enemy", text: "Un golpe letal (+25 % de crítico)." },
+  "ensarte": { name: "Ensarte", cat: "lanza", ap: 8, stat: "atk", power: 2.1, crit: 25, type: "perforante", target: "enemy", effects: [{ do: "status", kind: "bleed", chance: 0.8, turns: 3 }], text: "Un golpe letal (+25 % de crítico). 80 %: Sangrado." },
   "lanza-tormenta": { name: "Lanza de Tormenta", cat: "lanza", ap: 10, stat: "atk", power: 1.05, hits: 3, type: "perforante", target: "randomEnemies", text: "Tres lanzadas a enemigos al azar." },
   "carga-doncella": { name: "Carga de la Doncella", cat: "rasgos", ap: 14, stat: "atk", power: 1.8, type: "perforante", target: "allEnemies", effects: [{ do: "slow", turns: 2 }], text: "Definitiva: carga contra todos y los ralentiza." },
 
   // Kaelen — Artes del Jinete
   "carga-veloz": { name: "Carga Veloz", cat: "jinete", ap: 3, stat: "atk", power: 1.3, type: "cortante", target: "enemy", delay: 70, text: "Rápida: vuelves a actuar antes." },
-  "golpe-carrera": { name: "Golpe en Carrera", cat: "jinete", ap: 5, stat: "atk", power: 1.0, hits: 2, type: "cortante", target: "enemy", text: "Dos tajos al galope." },
+  "golpe-carrera": { name: "Golpe en Carrera", cat: "jinete", ap: 5, stat: "atk", power: 1.0, hits: 2, type: "cortante", target: "enemy", effects: [{ do: "status", kind: "bleed", chance: 0.35, turns: 3 }], text: "Dos tajos al galope. 35 %: Sangrado." },
   "pisoton": { name: "Pisotón", cat: "jinete", ap: 5, stat: "atk", power: 1.2, type: "contundente", target: "enemy", effects: [{ do: "stun", chance: 0.45 }, { do: "interrupt" }], text: "Puede aturdir; interrumpe cargas." },
   "cabalgata": { name: "Cabalgata", cat: "jinete", ap: 7, stat: "atk", power: 0.95, type: "cortante", target: "allEnemies", delay: 80, text: "Cruza el campo golpeando a todos." },
   "embestida-corcel": { name: "Embestida del Corcel", cat: "jinete", ap: 10, stat: "atk", power: 2.4, type: "contundente", target: "enemy", effects: [{ do: "interrupt" }, { do: "delay", amount: 40 }], text: "Un golpe devastador que retrasa al enemigo." },
@@ -125,11 +125,11 @@ export const SKILLS = {
   // Kaelor, el Rey Errante (invitado)
   "hoja-rey": { name: "Hoja del Rey", cat: "invitado", ap: 5, stat: "atk", power: 2.2, type: "cortante", target: "enemy", text: "La hoja forjada de nuevo." },
   "juramento-rey": { name: "Juramento del Rey", cat: "invitado", ap: 6, target: "allAllies", effects: [{ do: "buff", stat: "atk", mult: 1.3, turns: 3 }, { do: "buff", stat: "def", mult: 1.2, turns: 3 }], text: "Ataque y defensa al grupo." },
-  "destello-real": { name: "Destello Real", cat: "invitado", ap: 8, stat: "mag", power: 1.4, type: "luz", target: "allEnemies", text: "Luz real sobre todos los enemigos." },
+  "destello-real": { name: "Destello Real", cat: "invitado", ap: 8, stat: "mag", power: 1.4, type: "luz", target: "allEnemies", effects: [{ do: "status", kind: "silence", chance: 0.5, turns: 2 }], text: "Luz real sobre todos los enemigos. 50 %: Silencio." },
 
   // Maestro Orven, el Mago Gris (invitado)
   "luz-cegadora": { name: "Luz Cegadora", cat: "invitado", ap: 6, stat: "mag", power: 1.4, type: "luz", target: "allEnemies", effects: [{ do: "status", kind: "blind", chance: 0.5, turns: 2 }], text: "Luz blanca sobre todos los enemigos." },
-  "baston-ardiente": { name: "Bastón Ardiente", cat: "invitado", ap: 5, stat: "mag", power: 2.0, type: "fuego", target: "enemy", effects: [{ do: "interrupt" }], text: "Llamas del bastón que interrumpen cargas." },
+  "baston-ardiente": { name: "Bastón Ardiente", cat: "invitado", ap: 5, stat: "mag", power: 2.0, type: "fuego", target: "enemy", effects: [{ do: "interrupt" }, { do: "status", kind: "burn", chance: 0.7, turns: 3 }], text: "Llamas que interrumpen cargas. 70 %: Quemadura." },
   "escudo-errante": { name: "Escudo del Errante", cat: "invitado", ap: 6, target: "allAllies", effects: [{ do: "buff", stat: "def", mult: 1.35, turns: 3 }, { do: "buff", stat: "res", mult: 1.35, turns: 3 }], text: "Una barrera para todo el grupo." },
 };
 
@@ -329,7 +329,7 @@ export const ITEMS = {
   "raiz-alba": { name: "Raíz del Alba", text: "Cura el 45 % de la vida.", target: "ally", heal: 0.45, price: 25 },
   "hidromiel": { name: "Hidromiel Plateado", text: "Recupera 12 AP.", target: "ally", ap: 12, price: 30 },
   "hoja-vela": { name: "Hoja de Vela", text: "Revive con el 35 % de vida.", target: "deadAlly", revive: 0.35, price: 60 },
-  "antidoto": { name: "Musgo Limpio", text: "Cura venenos, quemaduras y sangrados.", target: "ally", cleanse: true, price: 15 },
+  "antidoto": { name: "Musgo Limpio", text: "Cura todos los estados alterados.", target: "ally", cleanse: true, price: 15 },
   "gran-raiz": { name: "Gran Raíz del Alba", text: "Cura el 80 % de la vida.", target: "ally", heal: 0.8, price: 70 },
   "elixir-plata": { name: "Elixir de Plata", text: "Recupera 25 AP.", target: "ally", ap: 25, price: 80 },
 };

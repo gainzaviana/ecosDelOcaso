@@ -150,3 +150,52 @@ test("Chapter 1 battles are all winnable by the bot at the expected level", () =
     assert.ok(wins > 0, `${name}: never won`);
   }
 });
+
+test("sleep skips turns until a hit wakes the sleeper", () => {
+  const g = newGame();
+  const b = createBattle(g, { enemies: ["merodeador"] }, rng(11));
+  advance(b);
+  const foe = enemies(b)[0];
+  foe.statuses.sleep = { turns: 3 };
+  foe.next = b.time + 1; // acts next
+  for (const h of heroes(b)) h.next = b.time + 2;
+  const ev = advance(b);
+  assert.ok(ev.some((e) => e.t === "status" && e.uid === foe.uid && e.sleep), "slept through its turn");
+  assert.equal(foe.statuses.sleep.turns, 2);
+  // A hit wakes it.
+  const valen = b.units.find((x) => x.id === "valen");
+  b.turnUid = valen.uid;
+  foe.eva = 0; foe.hp = foe.hpMax * 10; foe.hpMax *= 10;
+  act(b, { kind: "attack", target: foe.uid });
+  assert.equal(foe.statuses.sleep, undefined);
+});
+
+test("silence blocks hero skills; bosses are immune to sleep and confusion", () => {
+  const g = newGame();
+  const b = createBattle(g, { enemies: ["guardian"] }, rng(12));
+  advance(b);
+  const valen = b.units.find((x) => x.id === "valen");
+  valen.statuses.silence = { turns: 2 };
+  b.turnUid = valen.uid;
+  valen.ap = 30;
+  assert.ok(heroSkills(b, valen).every((x) => x.why));
+  assert.ok(act(b, { kind: "skill", skill: valen.skills[0], target: enemies(b)[0].uid }).error);
+  const elowen = b.units.find((x) => x.id === "elowen");
+  elowen.skills.push("lamento-lento"); elowen.ap = 30; b.turnUid = elowen.uid;
+  for (let k = 0; k < 6; k++) { b.turnUid = elowen.uid; elowen.ap = 30; act(b, { kind: "skill", skill: "lamento-lento", target: enemies(b)[0].uid }); }
+  assert.equal(enemies(b)[0].statuses.sleep, undefined, "boss never sleeps");
+});
+
+test("confused fighters sometimes lash out on their own and the state wears off", () => {
+  const g = newGame();
+  const b = createBattle(g, { enemies: ["merodeador", "merodeador"] }, rng(13));
+  advance(b);
+  let lashed = 0;
+  for (let k = 0; k < 40 && !b.result; k++) {
+    for (const u of b.units) if (u.alive && u.side === "enemy") u.statuses.confuse = { turns: 2 };
+    const u = current(b);
+    const ev = u.side === "enemy" ? enemyAct(b) : act(b, { kind: "defend" });
+    lashed += ev.filter((e) => e.confuse).length;
+  }
+  assert.ok(lashed > 0);
+});

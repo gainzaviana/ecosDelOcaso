@@ -40,7 +40,7 @@ const FONT = {
   P: "110101110100100", Q: "010101101111011", R: "110101110101101", S: "011100010001110", T: "111010010010010",
   U: "101101101101111", V: "101101101101010", W: "101101111111101", X: "101101010101101", Y: "101101010010010",
   Z: "111001010100111", "+": "000010111010000", "!": "010010010000010", "-": "000000111000000", " ": "000000000000000",
-  "¡": "010000010010010", "É": "111100110100111", "Í": "111010010010111", "Ó": "010101101101010", "Ú": "101101101101111", "Ñ": "111000110101101", "▲": "000010111111000", "▼": "000111111010000",
+  "¡": "010000010010010", "É": "111100110100111", "Í": "111010010010111", "Ó": "010101101101010", "Ú": "101101101101111", "Ñ": "111000110101101", "▲": "000010111111000", "?": "111001010000010", "▼": "000111111010000",
 };
 
 export function drawText(x, text, px, py, color, scale = 1) {
@@ -574,6 +574,24 @@ export function battleLayout(b, W, H, keep) {
   return pos;
 }
 
+/** Tiny 5×5 icons for the damage types, drawn under each enemy's health bar. */
+const TYPE_GLYPH = {
+  cortante: "0000100010001000100010000",
+  perforante: "0010001110101010010000100",
+  contundente: "1111111111001000010000100",
+  fuego: "0010000110011101111101110",
+  luz: "0010010101011101010100100",
+  sombra: "0111011000100001100001110",
+};
+export function drawGlyph(x, type, px, py, color) {
+  const g = TYPE_GLYPH[type]; if (!g) return;
+  x.fillStyle = OUTLINE; x.fillRect(px - 1, py - 1, 7, 7);
+  x.fillStyle = color ?? TYPE_COLORS[type]?.[0] ?? "#fff";
+  for (let k = 0; k < 25; k++) if (g[k] === "1") x.fillRect(px + (k % 5), py + Math.floor(k / 5), 1, 1);
+}
+/** Colours of the little status pips over a fighter. */
+const STATUS_PIP = { poison: "#8ad050", burn: "#ff8a30", bleed: "#e03040", blind: "#5a4a6a", confuse: "#ff9aff", sleep: "#9ab8ff", silence: "#c0c0c0", fear: "#60c0ff" };
+
 const RANGED = new Set(["theron", "arquero", "trasgo-arquero", "ballestero", "arquero-oscuro"]);
 
 /**
@@ -581,7 +599,7 @@ const RANGED = new Set(["theron", "arquero", "trasgo-arquero", "ballestero", "ar
  * particle effects, and floating numbers drawn sharp on top.
  */
 export class BattleView extends Stage {
-  constructor(cv) { super(cv); this.fx = []; this.anims = new Map(); this.dying = new Map(); this.b = null; this.selected = null; }
+  constructor(cv) { super(cv); this.fx = []; this.anims = new Map(); this.dying = new Map(); this.b = null; this.selected = null; this.hintType = null; }
   setBattle(b) { this.b = b; this.setScene(b.bg); this.fx = []; this.anims.clear(); this.dying.clear(); }
   layout() {
     const now = performance.now();
@@ -638,7 +656,25 @@ export class BattleView extends Stage {
       if (Math.random() < 0.3) this.vfx.add({ kind: "gather", x: p.x + (Math.random() - 0.5) * 40, y: py + Math.random() * s.h, tx: p.x, ty: py + s.h / 2, color: "#ff6040", life: 400 });
       drawText(x, "!", p.x, py - 9, "#ff5040");
     }
+    // The hero's current attack type hits this enemy's weakness: glow in that element's colour.
+    const hint = u.side === "enemy" && u.alive && this.hintType ? (u.weak.includes(this.hintType) ? "weak" : u.resist.includes(this.hintType) ? "resist" : null) : null;
+    if (hint === "weak") {
+      const k = (Math.sin(now / 120) + 1) / 2, glow = this.tinted(s, fi, TYPE_COLORS[this.hintType]?.[1] ?? "#ffe08a");
+      x.globalCompositeOperation = "lighter"; x.globalAlpha = 0.35 + k * 0.45;
+      for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) x.drawImage(glow, px + ox, py + oy);
+      x.globalCompositeOperation = "source-over"; x.globalAlpha = 1;
+    }
     this.drawFigure(x, s, fi, px, py, { alpha, flash: a.flash && now - a.flash < 110, lift });
+    if (hint === "weak") { const bob = Math.round(Math.sin(now / 150) * 1.5); drawGlyph(x, this.hintType, Math.round(p.x) - 2, py - 12 + bob); x.fillStyle = "#ffe08a"; x.fillRect(Math.round(p.x) - 1, py - 4 + bob, 3, 1); x.fillRect(Math.round(p.x), py - 3 + bob, 1, 1); }
+    else if (hint === "resist") { x.globalAlpha = 0.85; drawGlyph(x, this.hintType, Math.round(p.x) - 2, py - 11, "#6a6a7a"); x.fillStyle = "#ff5a5a"; for (let k = 0; k < 7; k++) x.fillRect(Math.round(p.x) - 3 + k, py - 12 + k, 1, 1); x.globalAlpha = 1; }
+    // Status markers: floating Zs for sleep, a "?" for confusion, coloured pips for the rest.
+    if (u.alive) {
+      const st = u.statuses ?? {};
+      if (st.sleep) for (let k = 0; k < 2; k++) { const ph = ((now / 900 + k * 0.5) % 1); x.globalAlpha = 1 - ph; drawText(x, "Z", px + s.w + 1 + ph * 4, py - 2 - ph * 8, "#9ab8ff"); x.globalAlpha = 1; }
+      if (st.confuse) drawText(x, "?", Math.round(p.x + Math.sin(now / 200) * 4), py - 9, "#ff9aff");
+      const pips = Object.keys(st).filter((k) => k !== "sleep" && k !== "confuse" && STATUS_PIP[k]);
+      pips.forEach((k, i) => { x.fillStyle = OUTLINE; x.fillRect(px - 5, py + 1 + i * 4, 4, 4); x.fillStyle = STATUS_PIP[k]; x.fillRect(px - 4, py + 2 + i * 4, 2, 2); });
+    }
     if (u.uid === this.b.turnUid && u.alive) { x.fillStyle = "#ffe08a"; const bob = Math.round(Math.sin(now / 160)); x.fillRect(Math.round(p.x) - 1, py - 6 + bob, 3, 2); x.fillRect(Math.round(p.x), py - 4 + bob, 1, 1); }
     if (u.uid === this.selected) { x.strokeStyle = "#ffe08a"; x.globalAlpha = 0.6 + Math.sin(now / 100) * 0.4; x.strokeRect(px - 1.5, py - 1.5, s.w + 3, s.h + 3); x.globalAlpha = 1; }
     if (u.imbue && u.alive && Math.random() < 0.35) this.vfx.add({ kind: "ember", x: px + s.w / 2 + (Math.random() - 0.5) * 8, y: py + s.h * 0.5, vx: 0, vy: -20, color: TYPE_COLORS[u.imbue.type]?.[0] ?? "#ff8a30", life: 400 });
@@ -648,6 +684,8 @@ export class BattleView extends Stage {
       x.fillStyle = OUTLINE; x.fillRect(bx - 1, by - 1, bw + 2, 4);
       x.fillStyle = "#4a1a1a"; x.fillRect(bx, by, bw, 2);
       x.fillStyle = u.hp / u.hpMax > 0.4 ? "#e04848" : "#ff8a30"; x.fillRect(bx, by, Math.round((bw * u.hp) / u.hpMax), 2);
+      // Weaknesses under the health bar.
+      (u.weak ?? []).forEach((type, i) => drawGlyph(x, type, bx + i * 8, by + 5));
     }
     this.anims.set(u.uid, a);
   }
@@ -734,6 +772,12 @@ export class BattleView extends Stage {
         const c = this.center(u.uid); if (!c) return;
         const text = e.text ?? "";
         if (e.stun || /Aturdido/i.test(text)) V.stars(c.x, c.y - 10);
+        else if (e.kind === "sleep" || e.sleep) V.add({ kind: "ring", x: c.x, y: c.y, color: "#9ab8ff", r0: 14, r1: 4, life: 600, width: 1 });
+        else if (e.kind === "confuse" || e.confuse) V.stars(c.x, c.y - 10);
+        else if (e.kind === "silence") V.add({ kind: "ring", x: c.x, y: c.y - 6, color: "#c0c0c0", r0: 4, r1: 16, life: 500, width: 2 });
+        else if (e.kind === "fear") V.buff(c.x, c.y, "#60c0ff", false);
+        else if (e.kind === "blind") V.add({ kind: "smoke", x: c.x, y: c.y - 8, vx: 0, vy: -4, r: 6, color: "40,30,50", life: 700, add: false });
+        else if (e.kind === "bleed") V.sparks(c.x, c.y, "#e03040", 10, 50);
         else if (e.imbue) V.explosion(c.x, c.y, false);
         else if (e.good) V.buff(c.x, c.y, "#ffe08a", true);
         else if (/Veneno/i.test(text)) V.poison(c.x, c.y);

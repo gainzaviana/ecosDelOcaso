@@ -58,7 +58,7 @@ export const ENEMIES = {
     weak: ["fuego", "luz"], resist: ["perforante", "sombra"], xp: 70, gold: 45,
     skills: [
       { name: "Colmillos", power: 1.15, stat: "atk", type: "perforante", target: "hero", weight: 3, effects: [{ do: "status", kind: "poison", chance: 0.5, turns: 3 }] },
-      { name: "Nube de Esporas", power: 0.7, stat: "mag", type: "sombra", target: "allHeroes", weight: 2, charge: true, effects: [{ do: "status", kind: "poison", chance: 0.8, turns: 3 }] },
+      { name: "Nube de Esporas", power: 0.7, stat: "mag", type: "sombra", target: "allHeroes", weight: 2, charge: true, effects: [{ do: "status", kind: "poison", chance: 0.8, turns: 3 }, { do: "status", kind: "sleep", chance: 0.3, turns: 2 }] },
     ],
   },
   // Chapter 1 boss: two phases. At half health it roots itself and starts charging its big attack.
@@ -67,7 +67,7 @@ export const ENEMIES = {
     weak: ["fuego", "cortante"], resist: ["perforante", "sombra"], xp: 220, gold: 120,
     skills: [
       { name: "Azote de Ramas", power: 1.1, stat: "atk", type: "contundente", target: "hero", weight: 3 },
-      { name: "Esporas Marchitas", power: 0.6, stat: "mag", type: "sombra", target: "allHeroes", weight: 1, effects: [{ do: "status", kind: "poison", chance: 0.5, turns: 3 }] },
+      { name: "Esporas Marchitas", power: 0.6, stat: "mag", type: "sombra", target: "allHeroes", weight: 1, effects: [{ do: "status", kind: "poison", chance: 0.5, turns: 3 }, { do: "status", kind: "sleep", chance: 0.2, turns: 2 }] },
     ],
     phases: [
       {
@@ -103,7 +103,10 @@ export const ENEMIES = {
   murcielago: {
     name: "Murciélago de Ceniza", sprite: "murcielago", hp: 70, atk: 18, mag: 6, def: 5, res: 5, spd: 24, eva: 18,
     weak: ["perforante", "luz"], resist: ["sombra"], xp: 34, gold: 8,
-    skills: [{ name: "Mordisco", power: 0.95, stat: "atk", type: "perforante", target: "hero", weight: 3, effects: [{ do: "status", kind: "bleed", chance: 0.4, turns: 3 }] }],
+    skills: [
+      { name: "Mordisco", power: 0.95, stat: "atk", type: "perforante", target: "hero", weight: 3, effects: [{ do: "status", kind: "bleed", chance: 0.4, turns: 3 }] },
+      { name: "Chirrido", power: 0, target: "hero", weight: 1, effects: [{ do: "status", kind: "confuse", chance: 0.6, turns: 2 }] },
+    ],
   },
   "troll-cueva": {
     name: "Troll de la Cueva", sprite: "troll-cueva", hp: 300, atk: 28, mag: 6, def: 14, res: 6, spd: 10, eva: 0,
@@ -225,7 +228,7 @@ export const ENEMIES = {
     weak: ["luz", "fuego"], resist: ["cortante", "perforante", "contundente"], xp: 130, gold: 50,
     skills: [
       { name: "Toque Helado", power: 1.0, stat: "mag", type: "sombra", target: "hero", weight: 3, effects: [{ do: "slow", turns: 2 }] },
-      { name: "Lamento", power: 0.6, stat: "mag", type: "sombra", target: "allHeroes", weight: 1 },
+      { name: "Lamento", power: 0.6, stat: "mag", type: "sombra", target: "allHeroes", weight: 1, effects: [{ do: "status", kind: "fear", chance: 0.4, turns: 2 }] },
     ],
   },
   "arquero-oscuro": {
@@ -241,7 +244,7 @@ export const ENEMIES = {
     weak: ["perforante", "luz"], resist: ["contundente"], xp: 200, gold: 80,
     skills: [
       { name: "Garras", power: 1.1, stat: "atk", type: "cortante", target: "hero", weight: 3 },
-      { name: "Chillido", power: 0, target: "allHeroes", weight: 1, effects: [{ do: "slow", turns: 2 }] },
+      { name: "Chillido", power: 0, target: "allHeroes", weight: 1, effects: [{ do: "slow", turns: 2 }, { do: "status", kind: "confuse", chance: 0.3, turns: 2 }] },
       { name: "Picado", power: 2.0, stat: "atk", type: "perforante", target: "hero", weight: 2, charge: true },
     ],
   },
@@ -258,7 +261,7 @@ export const ENEMIES = {
         summon: ["espectro"],
         skills: [
           { name: "Hoja Espectral", power: 1.2, stat: "atk", type: "sombra", target: "hero", weight: 3 },
-          { name: "Grito de Pavor", power: 0, target: "allHeroes", weight: 1, effects: [{ do: "debuff", stat: "atk", mult: 0.75, turns: 3 }, { do: "slow", turns: 2 }] },
+          { name: "Grito de Pavor", power: 0, target: "allHeroes", weight: 1, effects: [{ do: "status", kind: "fear", chance: 0.7, turns: 3 }, { do: "slow", turns: 2 }] },
           { name: "Picado Mortal", power: 2.4, stat: "atk", type: "sombra", target: "hero", weight: 2, charge: true },
         ],
       },
@@ -280,6 +283,7 @@ export const ENEMIES = {
     skills: [
       { name: "Doble Tajo", power: 0.75, stat: "atk", type: "cortante", target: "hero", weight: 3 },
       { name: "Grito Negro", power: 0, target: "self", weight: 1, effects: [{ do: "buff", stat: "atk", mult: 1.25, turns: 3 }] },
+      { name: "Mirada de Hierro", power: 0, target: "hero", weight: 1, effects: [{ do: "status", kind: "fear", chance: 0.6, turns: 2 }] },
       { name: "Ejecución", power: 2.0, stat: "atk", type: "cortante", target: "hero", weight: 1, charge: true },
     ],
   },
@@ -297,6 +301,7 @@ export const ENEMIES = {
         skills: [
           { name: "Maza del Rey", power: 1.2, stat: "atk", type: "contundente", target: "hero", weight: 2 },
           { name: "Corona de Sombras", power: 1.0, stat: "mag", type: "sombra", target: "allHeroes", weight: 2, effects: [{ do: "debuff", stat: "def", mult: 0.75, turns: 3 }] },
+          { name: "Palabra de Silencio", power: 0.5, stat: "mag", type: "sombra", target: "allHeroes", weight: 1, effects: [{ do: "status", kind: "silence", chance: 0.35, turns: 2 }] },
           { name: "Juicio Sombrío", power: 2.2, stat: "mag", type: "sombra", target: "hero", weight: 2, charge: true },
         ],
       },
