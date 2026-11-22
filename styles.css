@@ -174,3 +174,16 @@ canvas.pixel { width: 100%; height: auto; image-rendering: pixelated; image-rend
 @media (min-width: 700px) {
   #app { max-width: 560px; }
 }
+
+/* Autosave indicator, chapter title cards */
+.save-dot { position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); right: 10px; z-index: 50; font-size: 16px; opacity: 0; pointer-events: none; }
+.save-dot.on { animation: savepulse 1.4s ease-out; }
+@keyframes savepulse { 0% { opacity: 0; transform: scale(0.6); } 20% { opacity: 1; transform: scale(1.1); } 70% { opacity: 1; } 100% { opacity: 0; } }
+.btn-sub { display: block; font-size: 12px; font-weight: 400; opacity: 0.8; }
+.title-card { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: radial-gradient(circle at 50% 45%, #2a1e44, #07040c 70%); text-align: center; padding: 20px; animation: tcin 0.8s ease-out; transition: opacity 0.5s; }
+.title-card.out { opacity: 0; }
+.tc-num { color: var(--muted); letter-spacing: 6px; text-transform: uppercase; font-size: 15px; }
+.tc-name { color: var(--gold-2); font-size: clamp(26px, 8vw, 40px); font-weight: 700; text-shadow: 0 3px 0 #4a2a14, 0 0 24px rgba(255, 200, 120, 0.5); }
+@keyframes tcin { from { opacity: 0; letter-spacing: 8px; } to { opacity: 1; } }
+.big-title { font-size: 30px; color: var(--gold-2); }
+.credits { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; margin-top: 10px; color: var(--gold); }

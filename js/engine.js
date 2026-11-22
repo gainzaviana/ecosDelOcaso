@@ -51,9 +51,19 @@ export function newGame() {
   };
 }
 
-/** A hero joins the fellowship (to the active party if there's room). */
+/**
+ * A hero joins the fellowship (to the active party if there's room). They arrive at the party's
+ * level, with that level's attribute points to spend and the basic tiers of their skills.
+ */
 export function joinHero(g, id) {
-  if (!g.heroes[id]) g.heroes[id] = newHero(id, Math.max(1, ...Object.values(g.heroes).map((h) => h.level)));
+  if (!g.heroes[id]) {
+    const level = Math.max(1, ...Object.values(g.heroes).filter((h, k) => !HEROES[Object.keys(g.heroes)[k]]?.guest).map((h) => h.level));
+    const hs = newHero(id, level);
+    hs.attrPoints = (level - 1) * ATTR_POINTS_PER_LEVEL;
+    const tierMastery = level >= 10 ? 10 : level >= 4 ? 4 : 0;
+    for (const k of Object.keys(hs.mastery)) hs.mastery[k] = tierMastery;
+    g.heroes[id] = hs;
+  }
   if (g.party.active.includes(id) || g.party.reserve.includes(id)) return;
   if (g.party.active.length < 3) g.party.active.push(id); else g.party.reserve.push(id);
 }
@@ -90,7 +100,7 @@ export function heroStats(g, id) {
   const hpMax = Math.round((40 + a.con * 8 + hs.level * 6 + b.hp) * (1 + t("hpPct")));
   return {
     hpMax,
-    apMax: 12 + a.esp * 3 + b.ap + t("apMax"),
+    apMax: Math.round(14 + a.esp * 1.6 + hs.level + b.ap + t("apMax")),
     atk: 4 + a.fue * 2 + b.atk,
     mag: 4 + a.esp * 2 + b.mag,
     def: 2 + a.con + b.def,

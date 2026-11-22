@@ -32,19 +32,23 @@ function heroUnit(g, id, uid) {
 /** Tuning knobs for enemy strength (1 = as written in enemies.js). */
 export const TUNING = { hp: 1.25, atk: 1.9, boss: 1.25 };
 
-function enemyUnit(id, uid) {
+/** scale: a number (health ×n, attack ×√n) or { hp, atk } for a chapter's enemies. */
+function enemyUnit(id, uid, scale = 1) {
   const e = ENEMIES[id];
-  const hp = Math.round(e.hp * TUNING.hp * (e.boss ? TUNING.boss : 1));
+  const sh = typeof scale === "number" ? scale : scale.hp ?? 1;
+  const sa = typeof scale === "number" ? Math.sqrt(scale) : scale.atk ?? 1;
+  // Bosses' health is set by hand for their chapter: the chapter scales only their attack and speed.
+  const hp = Math.round(e.hp * TUNING.hp * (e.boss ? TUNING.boss : sh));
   return {
     uid, side: "enemy", id, name: e.name, boss: !!e.boss,
     hp, hpMax: hp, ap: 0, apMax: 0,
-    atk: e.atk * TUNING.atk, mag: e.mag * TUNING.atk, def: e.def, res: e.res, spd: e.spd, crit: 5, eva: e.eva ?? 0,
+    atk: e.atk * TUNING.atk * sa, mag: e.mag * TUNING.atk * sa, def: e.def, res: e.res, spd: e.spd * (typeof scale === "number" ? 1 : scale.spd ?? 1), crit: 5, eva: e.eva ?? 0,
     weak: e.weak, resist: e.resist, skills: e.skills, phasesDone: 0,
     ...freshState(),
   };
 }
 
-const freshState = () => ({ next: 0, buffs: [], statuses: {}, haste: 0, slow: 0, taunt: 0, counter: 0, evade: 0, regen: 0, charging: null, defending: false, revived: false, alive: true, inReserve: false });
+const freshState = () => ({ next: 0, buffs: [], statuses: {}, haste: 0, slow: 0, taunt: 0, counter: 0, evade: 0, regen: 0, imbue: null, charging: null, defending: false, revived: false, alive: true, inReserve: false });
 
 /**
  * A new battle. opts: { enemies: [ids], script?: [...], seed?, guests?: [hero ids that join now] }.
@@ -55,13 +59,13 @@ export function createBattle(g, opts, rand = Math.random) {
     time: 0, units: [], fellowship: opts.fellowship ?? 0, turnUid: null, result: null, turns: 0,
     mastery: {}, discovered: {}, defeated: 0, script: (opts.script ?? []).map((s) => ({ ...s, done: false })),
     rand, inventory: g.inventory, bg: opts.bg ?? "bosque", music: opts.music, xp: 0, gold: 0, drops: [], log: [],
-    noLoss: !!opts.noLoss,
+    noLoss: !!opts.noLoss, scale: opts.scale ?? 1, spec: opts,
   };
   let n = 0;
   for (const id of g.party.active) b.units.push(heroUnit(g, id, `h${n++}`));
   for (const id of g.party.reserve) { const u = heroUnit(g, id, `h${n++}`); u.inReserve = true; b.units.push(u); }
   n = 0;
-  for (const id of opts.enemies) b.units.push(enemyUnit(id, `e${n++}`));
+  for (const id of opts.enemies) b.units.push(enemyUnit(id, `e${n++}`, b.scale));
   for (const u of b.units) u.next = startDelay(b, u);
   b.g = g;
   return b;
@@ -171,6 +175,7 @@ function endTurn(b, u, delay = 100) {
   for (const x of u.buffs) x.turns--;
   u.buffs = u.buffs.filter((x) => x.turns > 0);
   for (const k of ["haste", "slow", "taunt", "counter", "evade"]) if (u[k] > 0) u[k]--;
+  if (u.imbue && --u.imbue.turns <= 0) u.imbue = null;
 }
 
 function checkEnd(b, ev) {
@@ -394,7 +399,10 @@ function enemySkill(b, u, s, ev) {
 /** One hit. Returns whether it hit a weakness. */
 function strike(b, u, t, s, ev) {
   if (!t.alive) return false;
-  const type = s.type ?? "contundente";
+  let type = s.type ?? "contundente";
+  // Runa de Brasa: the hero's physical blows carry the imbued element.
+  const imbued = u.imbue && PHYSICAL.includes(type);
+  if (imbued) type = u.imbue.type;
   const physical = PHYSICAL.includes(type);
   // Evasion (physical only) and blindness.
   const eva = (stat(t, "eva") ?? 0) + (t.evade > 0 ? 40 : 0);
@@ -402,7 +410,7 @@ function strike(b, u, t, s, ev) {
   if (physical && b.rand() * 100 < eva + blind) { ev.push({ t: "miss", uid: t.uid }); return false; }
   const atk = stat(u, s.stat ?? "atk");
   const mitig = physical ? stat(t, "def") : stat(t, "res");
-  let dmg = atk * (s.power ?? 1) * (40 / (40 + mitig));
+  let dmg = atk * (s.power ?? 1) * (40 / (40 + mitig)) * (imbued ? 1.1 : 1);
   const weak = t.weak.includes(type);
   const resisted = t.resist.includes(type);
   if (weak) dmg *= 1.5;
@@ -507,7 +515,12 @@ function applyEffect(b, u, t, e, s, ev) {
       ev.push({ t: "status", uid: t.uid, text: e.do === "haste" ? "Prisa" : "Lentitud", good: e.do === "haste" });
       break;
     }
-    case "stun": t.next += 0.7 * BASE / spdEff(t); interrupt(t, ev); ev.push({ t: "status", uid: t.uid, text: "Aturdido", good: false }); break;
+    case "stun": {
+      if (e.chance !== undefined && b.rand() > e.chance) break;
+      t.next += (0.7 * BASE) / spdEff(t); interrupt(t, ev); ev.push({ t: "status", uid: t.uid, text: "Aturdido", good: false, stun: true });
+      break;
+    }
+    case "imbue": t.imbue = { type: e.type, turns: e.turns }; ev.push({ t: "status", uid: t.uid, text: `Arma de ${DMG[e.type].name}`, good: true, imbue: e.type }); break;
     case "delay": t.next += (e.amount * BASE) / 100 / spdEff(t); ev.push({ t: "status", uid: t.uid, text: "Retrasado", good: false }); break;
     case "interrupt": interrupt(t, ev); break;
     case "heal": heal(b, t, Math.round(stat(u, "mag") * e.power * (1 + (u.healPct ?? 0))), ev); break;
@@ -544,7 +557,7 @@ function checkPhase(b, t, ev) {
 }
 
 function addEnemy(b, id, ev) {
-  const u = enemyUnit(id, `e${b.units.length}`);
+  const u = enemyUnit(id, `e${b.units.length}`, b.scale);
   u.next = b.time + (50 * BASE) / 100 / spdEff(u);
   b.units.push(u);
   ev.push({ t: "summon", uid: u.uid });
@@ -568,9 +581,18 @@ function runScript(b, ev) {
   }
 }
 
+/** A guest hero at least as strong as the party (their attributes grow with the level). */
+export function guestState(g, id) {
+  const H = HEROES[id];
+  const party = Math.max(1, ...Object.entries(g.heroes).filter(([k, h]) => h && !HEROES[k]?.guest).map(([, h]) => h.level));
+  const level = Math.max(H.level ?? 1, party + 1);
+  const grow = Math.floor((level - 1) * 0.7);
+  return { level, xp: 0, attrPoints: 0, attrs: Object.fromEntries(Object.entries(H.base).map(([k, v]) => [k, v + grow])), mastery: {}, gear: { ...H.gear }, sockets: { weapon: [], armor: [] }, hp: null, ap: null };
+}
+
 function joinUnit(b, id, ev) {
   if (b.units.some((u) => u.id === id)) return;
-  if (!b.g.heroes[id]) b.g.heroes[id] = { level: HEROES[id].level ?? 1, xp: 0, attrPoints: 0, attrs: { ...HEROES[id].base }, mastery: {}, gear: { ...HEROES[id].gear }, sockets: { weapon: [], armor: [] }, hp: null, ap: null };
+  b.g.heroes[id] = guestState(b.g, id);
   const u = heroUnit(b.g, id, `h${b.units.length}`);
   u.next = b.time + (30 * BASE) / 100 / spdEff(u);
   if (heroes(b, false).length >= 3) u.inReserve = true;
@@ -588,3 +610,17 @@ export function battleResult(b) {
 }
 
 export const DAMAGE_TYPES = DMG;
+
+// MARK: Saving a battle in progress
+
+/** The battle as JSON (without the random source and the game references). */
+export function exportBattle(b) {
+  return JSON.stringify(b, (k, v) => (k === "rand" || k === "g" || k === "inventory" ? undefined : v));
+}
+
+/** A saved battle, reconnected to the game state. */
+export function importBattle(json, g, rand = Math.random) {
+  const b = typeof json === "string" ? JSON.parse(json) : json;
+  b.rand = rand; b.g = g; b.inventory = g.inventory;
+  return b;
+}

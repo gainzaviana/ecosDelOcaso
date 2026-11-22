@@ -98,7 +98,7 @@ export function say(who, text) {
  * Runs a battle to its end in the battle screen. Resolves with the finished battle.
  * `onSay` shows scripted dialogue mid-battle.
  */
-export async function runBattle(b, g) {
+export async function runBattle(b, g, { resume = false, onProgress } = {}) {
   show("battle");
   const cv = $("#battle-canvas");
   const view = new BattleView(cv);
@@ -118,12 +118,14 @@ export async function runBattle(b, g) {
   };
 
   const { advance, enemyAct } = await import("./combat.js");
-  await play(advance(b));
+  if (!resume) await play(advance(b));
+  onProgress?.();
   while (!b.result) {
     const u = current(b);
     if (u.side === "enemy") {
       await new Promise((r) => setTimeout(r, 380));
       await play(enemyAct(b));
+      onProgress?.();
       continue;
     }
     const action = await chooseAction(b, g, view, ui);
@@ -132,6 +134,7 @@ export async function runBattle(b, g) {
     ui.selecting = null;
     view.selected = null;
     await play(ev);
+    onProgress?.();
   }
   await new Promise((r) => setTimeout(r, 500));
   view.stop();
@@ -336,7 +339,7 @@ export function partySheet(g, onChange) {
             onChange?.(); rerender();
           } }, active ? "A reserva" : "A combate"));
       })));
-      body.append(h("div", { class: "future" }, h("div", { class: "muted small" }, "Se unirán más adelante:"), ...FUTURE_HEROES.map((f) => h("div", { class: "row muted" }, `🔒 ${f.name}, ${f.title}`))));
+      body.append(h("div", { class: "future" }, h("div", { class: "muted small" }, "Se unirán más adelante:"), ...FUTURE_HEROES.filter((f) => !g.heroes[f.id]).map((f) => h("div", { class: "row muted" }, `🔒 ${f.name}, ${f.title} (capítulo ${f.chapter})`))));
     }
     void close;
   }, { wide: true });

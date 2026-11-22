@@ -17,8 +17,12 @@ python3 -m http.server 8080      # o: npm start
 ```
 
 Abre `http://<IP-de-tu-ordenador>:8080` en el móvil (misma wifi) y usa «Añadir a pantalla de inicio»
-para instalarlo como app. La partida se guarda sola tras cada combate, escena y viaje; en las hogueras
-hay tres ranuras de guardado manual.
+para instalarlo como app.
+
+**Guardado automático**: la partida se guarda sola después de cada acción de combate, cada línea de
+diálogo y cada viaje, cada 20 segundos, y al cerrar o minimizar la app (un 💾 parpadea al guardar).
+Si cierras en mitad de un combate o de una escena, «Continuar» te devuelve exactamente a ese punto.
+En las hogueras hay además tres ranuras de guardado manual.
 
 ## Qué hay
 
@@ -36,9 +40,27 @@ hay tres ranuras de guardado manual.
   y Velocidad.
 - **Equipo y runas**: arma, armadura y capa; las armas y armaduras tienen engarces para runas
   (crítico, AP por turno, resistencia a la Sombra, revivir una vez…).
-- **Capítulo I · Sombras en el Bosque Susurrante**: emboscada inicial con el Mago Gris, mapa con
-  cinco lugares, hoguera con tienda, la misión secundaria de Mirla (recompensa: Lágrima Estelar) y el
-  jefe en dos fases, el Guardián Marchito, con Maestro Orven como invitado.
+- **Iluminación dinámica**: los escenarios se pintan en tres capas con paralaje y se iluminan en
+  tiempo real. Antorchas, hogueras, lava, cristales y hechizos abren luz en la oscuridad; los
+  personajes proyectan sombras largas y tienen un borde de luz del lado de la fuente. Hay lluvia,
+  nieve, brasas, ceniza, niebla, relámpagos, reflejos en el agua y una cámara que se acerca a la acción.
+- **Efectos de combate**: cada tipo de daño tiene su efecto (tajos, estocadas, ondas de choque con
+  escombros, bolas de fuego con explosión, rayos de luz, orbes de sombra), además de círculos
+  mágicos, curaciones, mejoras, venenos, cargas, interrupciones, el Ataque de la Comunidad y los
+  cambios de fase de los jefes.
+
+## Capítulos
+
+| Capítulo | Jefe | Se une |
+|---|---|---|
+| **I · Sombras en el Bosque Susurrante** | El Guardián Marchito | Theron (Orven como invitado) |
+| **II · Las Minas de Hondaforja** | El Coloso de Brasa | Bram |
+| **III · Las Llanuras Doradas** | Draugmar, Capitán de Hierro Negro | Freya y Kaelen (Kaelor como invitado) |
+| **IV · La Ciudad Ribereña en Ruinas** | Morvath, el Espectro Alado | — |
+| **V · El Asedio de la Ciudadela Blanca** | El Rey Sombrío | Final de la historia |
+
+Cada capítulo tiene su mapa, una hoguera con tienda, una misión secundaria con recompensa
+(Lágrima Estelar, armas del Último Ocaso…) y enemigos propios con sus debilidades.
 
 ## Héroes
 
@@ -47,10 +69,11 @@ hay tres ranuras de guardado manual.
 | **Valen**, Capitán de la Ciudadela | Espada y mando | Artes de Espada · Liderazgo |
 | **Elowen**, Doncella de la Luz Estelar | Magia de luz y apoyo | Luz Espiritual · Canto Élfico |
 | **Theron**, Montaraz del Norte | Arco y artes del bosque | Arquería · Artes del Montaraz |
+| **Bram**, Herrero de Hondaforja | Hacha y runas de fuego | Hacha · Forja Rúnica |
+| **Freya**, Doncella Escudera | Escudo y lanza | Escudo · Lanza |
+| **Kaelen**, Jinete de las Llanuras | Sable veloz | Jinete · Llanuras |
 | **Maestro Orven**, el Mago Gris | Invitado | Saber Antiguo |
-
-Próximos capítulos: Bram (Herrero de Hondaforja), Freya (Doncella Escudera), Kaelen (Jinete de las
-Llanuras) y Kaelor, el Rey Errante, como invitado.
+| **Kaelor**, el Rey Errante | Invitado | Hoja del Rey |
 
 ## Código
 
@@ -59,14 +82,17 @@ Llanuras) y Kaelor, el Rey Errante, como invitado.
 | `js/combat.js` | Motor de combate (lógica pura): línea de turnos, daño, estados, cargas, Comunidad. |
 | `js/engine.js` | Estado de la partida, estadísticas, niveles, equipo, guardado. |
 | `js/characters.js` | Héroes, habilidades, árboles de maestría, equipo, runas y objetos. |
-| `js/enemies.js` | Enemigos del capítulo I (debilidades, cargas, fases del jefe). |
-| `js/story.js` | Capítulo I: escenas, mapa, combates y misión secundaria. |
-| `js/pixelRenderer.js` | Sprites, fondos, partículas y efectos dibujados en canvas. |
+| `js/enemies.js` | Enemigos de los cinco capítulos (debilidades, cargas, fases de los jefes). |
+| `js/story.js` | Personajes que hablan y la lista de capítulos. |
+| `js/chapters/ch1–ch5.js` | Cada capítulo: mapa, escenas, combates, misión secundaria y tienda. |
+| `js/sprites.js` | Sprites de héroes y enemigos generados por código (pixel art). |
+| `js/vfx.js` | Partículas y luces de los efectos de combate. |
+| `js/pixelRenderer.js` | Escenarios con capas, iluminación, clima, cámara y las vistas de combate, escena y mapa. |
 | `js/ui.js` | Pantallas y menús (combate, grupo, tienda, guardado). |
 | `js/main.js` | Arranque, título, mapa y el director de la historia. |
 
 `TUNING` en `js/combat.js` ajusta la dureza de los enemigos.
 
 ```sh
-npm test    # node --test: el motor de combate y que cada combate del capítulo se puede ganar
+npm test    # node --test: motor de combate, combates ganables y coherencia de los cinco capítulos
 ```

@@ -1,0 +1,83 @@
+// Chapter IV: "La Ciudad Ribereña en Ruinas" (Velmara, river corsairs, wraiths, Morvath the Winged Wraith).
+
+export const CHAPTER4 = {
+  id: 4,
+  start: "r-muelles",
+  map: "rio",
+  /** Enemy strength for this chapter (health, attack and speed multipliers). */
+  scale: { hp: 2.1, atk: 2.4, spd: 1.75 },
+  title: "Capítulo IV · La Ciudad Ribereña en Ruinas",
+  next: "Capítulo V · El Asedio de la Ciudadela Blanca",
+  nodes: {
+    "r-muelles": { name: "Muelles Hundidos", x: 0.14, y: 0.74, bg: "rio", links: ["r-plaza"], scene: "r-intro", patrol: ["corsario", "arquero-oscuro"],
+      desc: "Barcazas medio hundidas y almacenes en ruinas a orillas de un río ancho y lento." },
+    "r-plaza": { name: "Plaza de las Estatuas", x: 0.42, y: 0.52, bg: "ciudad", links: ["r-muelles", "r-puente", "r-biblioteca", "r-faro"], scene: "r-plaza", camp: true,
+      desc: "Reyes de piedra sin cabeza vigilan una plaza vacía. Un erudito ha montado aquí su refugio." },
+    "r-puente": { name: "Puente Roto", x: 0.68, y: 0.72, bg: "rio", links: ["r-plaza"], scene: "r-puente", patrol: ["espectro", "corsario"],
+      desc: "El gran puente de Velmara, partido por la mitad. La niebla del río esconde algo." },
+    "r-biblioteca": { name: "Biblioteca Anegada", x: 0.22, y: 0.26, bg: "biblioteca", links: ["r-plaza"], scene: "r-biblioteca", requires: "tomo", patrol: ["espectro", "arquero-oscuro"],
+      desc: "Estanterías bajo el agua y libros flotando como hojas muertas." },
+    "r-faro": { name: "Torre del Faro", x: 0.76, y: 0.22, bg: "faro", links: ["r-plaza"], scene: "r-jefe", requires: "puente-roto",
+      desc: "El viejo faro de la ciudad. Sobre su cima, una sombra con alas da vueltas sin descanso." },
+  },
+  battles: {
+    "r-muelles": { enemies: ["corsario", "corsario", "arquero-oscuro"], bg: "rio", level: 12,
+      script: [{ when: { turns: 1 }, actions: [{ say: { who: "consejo", text: "Los corsarios no resisten bien los cortes ni la Luz. Más adelante encontraréis espectros: casi inmunes a las armas, pero no a la magia." } }] }] },
+    "r-puente": { enemies: ["espectro", "espectro", "corsario"], bg: "rio", level: 13,
+      script: [{ when: { turns: 1 }, actions: [{ say: { who: "elowen", text: "¡Espectros! El acero los atraviesa sin herirlos. Luz, fuego… o la Runa de Brasa de Bram." } }] }] },
+    "r-biblioteca": { enemies: ["espectro", "bestia-alada"], bg: "biblioteca", level: 13 },
+    "r-morvath": { enemies: ["morvath"], bg: "faro", level: 14, guest: "kaelor",
+      script: [{ when: { turns: 1 }, actions: [{ say: { who: "kaelor", text: "Morvath fue un rey, hace siglos. Hoy es solo un eco de odio. ¡Que la luz lo libere!" } }, { join: "kaelor" }] }] },
+  },
+  quests: {
+    tomo: { name: "El Tomo de Corwen", text: "Recupera el último tomo de las crónicas de Velmara de la Biblioteca Anegada.", reward: "Lágrima Estelar Mayor y el Arco del Último Ocaso" },
+  },
+  shop: {
+    items: ["gran-raiz", "elixir-plata", "hoja-vela", "antidoto"],
+    gear: ["espada-rey", "baculo-sol", "arco-viento", "martillo-trueno", "lanza-alba", "sable-viento", "armadura-real", "capa-estrellas"],
+  },
+  scenes: {
+    "r-intro": [
+      { say: ["narrador", "Velmara, la ciudad del río. Hace siglos fue la joya del reino. Hoy sus muelles son guarida de corsarios."] },
+      { say: ["kaelen", "Barcos negros remontando el río. Llevan soldados hacia la Ciudadela."] },
+      { say: ["freya", "Entonces no pasarán de aquí."] },
+      { battle: "r-muelles" },
+      { unlock: "r-plaza" },
+    ],
+    "r-plaza": [
+      { say: ["narrador", "En la Plaza de las Estatuas, un anciano entre pilas de libros salvados del agua."] },
+      { say: ["corwen", "¡Visitantes que no vienen a quemar libros! Soy Corwen, el último erudito de Velmara. Tengo raíces, elixires y algún acero viejo… y una petición."] },
+      { say: ["corwen", "En la Biblioteca Anegada quedó el último tomo de las crónicas de la ciudad. En él se habla de Morvath, el espectro del faro, y de cómo cayó la primera vez."] },
+      { quest: ["tomo", "active"] },
+      { flag: "tomo" },
+      { unlock: "r-puente" },
+      { unlock: "r-biblioteca" },
+    ],
+    "r-puente": [
+      { say: ["narrador", "El Puente Roto. La niebla se espesa y, en ella, figuras pálidas flotan sobre el agua."] },
+      { battle: "r-puente" },
+      { say: ["theron", "Desde aquí se ve el faro. Esa sombra con alas… nos ha visto."] },
+      { flag: "puente-roto" },
+      { unlock: "r-faro" },
+    ],
+    "r-biblioteca": [
+      { say: ["narrador", "La Biblioteca Anegada. El agua llega a la cintura, y algo enorme aletea entre las estanterías."] },
+      { battle: "r-biblioteca" },
+      { say: ["elowen", "Aquí está el tomo: «…y Morvath cayó cuando la luz del alba tocó su corona».  La luz, otra vez."] },
+      { give: ["rune", "lagrima-mayor", 1] },
+      { give: ["gear", "arco-ocaso", 1] },
+      { quest: ["tomo", "done"] },
+      { tip: "El Arco del Último Ocaso es para Theron: equípalo en Grupo → Equipo." },
+    ],
+    "r-jefe": [
+      { say: ["narrador", "La cima del faro. El viento aúlla. Una bestia alada se posa en la balaustrada, y sobre ella, un rey sin rostro."] },
+      { say: ["morvath", "Velmara cayó una vez. Caerá mil veces. Y vosotros con ella."] },
+      { say: ["kaelor", "No esta vez."] },
+      { battle: "r-morvath" },
+      { say: ["narrador", "Con un último grito, Morvath se deshace en ceniza y niebla. Por primera vez en siglos, la luz del faro vuelve a encenderse."] },
+      { say: ["kaelor", "La Ciudadela Blanca está a dos días río abajo. El Rey Sombrío en persona marcha hacia ella con todo su ejército."] },
+      { say: ["valen", "Entonces iremos a casa. Y lucharemos allí."] },
+      { chapterEnd: true },
+    ],
+  },
+};
