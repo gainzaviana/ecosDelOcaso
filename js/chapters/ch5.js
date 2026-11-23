@@ -4,8 +4,9 @@ export const CHAPTER5 = {
   id: 5,
   start: "c-campos",
   map: "ciudadela",
-  /** Enemy strength for this chapter (health, attack and speed multipliers). */
-  scale: { hp: 2.3, atk: 2.7, spd: 1.85 },
+  /** Enemy strength for this chapter (health, attack and speed multipliers), tuned for the level a
+   * party reaches by following the story, with no grinding. A battle can override it with its own `scale`. */
+  scale: { hp: 2.3, atk: 2.6, spd: 1.8 },
   title: "Capítulo V · El Asedio de la Ciudadela Blanca",
   next: null,
   nodes: {
@@ -21,12 +22,12 @@ export const CHAPTER5 = {
       desc: "La explanada ante la torre del rey. Allí espera el Rey Sombrío." },
   },
   battles: {
-    "c-campos": { enemies: ["hierro-elite", "troll-asedio"], bg: "campos", level: 15,
+    "c-campos": { enemies: ["hierro-elite", "troll-asedio"], bg: "campos", level: 13, scale: { hp: 2.5, atk: 2.85, spd: 1.85 },
       script: [{ when: { turns: 1 }, actions: [{ say: { who: "consejo", text: "La batalla final. Los trolls de asedio cargan golpes enormes: no los dejes llegar al ⚠. Prepara la barra de la Comunidad para los momentos decisivos." } }] }] },
-    "c-puerta": { enemies: ["hierro-elite", "hierro-elite"], bg: "ciudadela", level: 16,
+    "c-puerta": { enemies: ["hierro-elite", "hierro-elite"], bg: "ciudadela", level: 13,
       script: [{ when: { defeated: 1 }, actions: [{ say: { who: "freya", text: "¡Un troll en la puerta! ¡Que no la cruce!" } }, { spawn: ["troll-asedio"] }] }] },
-    "c-muralla": { enemies: ["bestia-alada", "espectro"], bg: "muralla", level: 16 },
-    "c-rey": { enemies: ["rey-sombrio"], bg: "trono", level: 17, guest: "kaelor",
+    "c-muralla": { enemies: ["bestia-alada", "espectro"], bg: "muralla", level: 14 },
+    "c-rey": { enemies: ["rey-sombrio"], bg: "trono", level: 14, scale: { atk: 2.1, spd: 1.65 }, guest: "kaelor",
       script: [
         { when: { turns: 1 }, actions: [{ say: { who: "kaelor", text: "¡Por la Ciudadela! ¡Por todos los que cayeron!" } }, { join: "kaelor" }] },
         { when: { turns: 8, hpBelow: 0.35 }, actions: [{ say: { who: "orven", text: "¡Os dije que nos volveríamos a ver! ¡Ahora, todos a una!" } }, { join: "orven" }, { fellowship: 100 }] },

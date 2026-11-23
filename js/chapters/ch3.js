@@ -4,8 +4,9 @@ export const CHAPTER3 = {
   id: 3,
   start: "l-ladera",
   map: "llanuras",
-  /** Enemy strength for this chapter (health, attack and speed multipliers). */
-  scale: { hp: 2.0, atk: 2.5, spd: 1.65 },
+  /** Enemy strength for this chapter (health, attack and speed multipliers), tuned for the level a
+   * party reaches by following the story, with no grinding. A battle can override it with its own `scale`. */
+  scale: { hp: 1.5, atk: 1.9, spd: 1.4 },
   title: "Capítulo III · Las Llanuras Doradas",
   next: "Capítulo IV · La Ciudad Ribereña en Ruinas",
   nodes: {
@@ -21,17 +22,17 @@ export const CHAPTER3 = {
       desc: "Una fortaleza excavada en la roca del valle. Su muralla es la última defensa de las llanuras." },
   },
   battles: {
-    "l-emboscada": { enemies: ["huargo-jinete", "hierro-negro", "hierro-negro"], bg: "llanuras", level: 9,
+    "l-emboscada": { enemies: ["huargo-jinete", "hierro-negro", "hierro-negro"], bg: "llanuras", level: 7, scale: { hp: 1.3, atk: 1.7, spd: 1.3 },
       script: [{ when: { turns: 1 }, actions: [{ say: { who: "consejo", text: "Los Guerreros de Hierro Negro resisten los cortes, pero no las lanzas ni la Luz. Los jinetes de huargo son rápidos: vigila la línea de turnos." } }] }] },
-    "l-vado": { enemies: ["huargo-jinete", "huargo-jinete", "ballestero"], bg: "llanuras", level: 10,
+    "l-vado": { enemies: ["huargo-jinete", "huargo-jinete", "ballestero"], bg: "llanuras", level: 8,
       script: [{ when: { turns: 1 }, actions: [{ say: { who: "kaelen", text: "¡Los jinetes cargan cuando se alejan! Interrumpidlos antes de que lleguen." } }] }] },
-    "l-atalaya": { enemies: ["bruto-asalto", "hierro-negro", "ballestero"], bg: "atalaya", level: 10 },
-    "l-muralla": { enemies: ["hierro-negro", "hierro-negro", "ballestero"], bg: "fortaleza", level: 11,
+    "l-atalaya": { enemies: ["bruto-asalto", "hierro-negro", "ballestero"], bg: "atalaya", level: 8 },
+    "l-muralla": { enemies: ["hierro-negro", "hierro-negro", "ballestero"], bg: "fortaleza", level: 9,
       script: [
         { when: { turns: 1 }, actions: [{ say: { who: "freya", text: "¡Defended la muralla! Si traen el ariete, la puerta no aguantará mucho." } }] },
         { when: { defeated: 2 }, actions: [{ say: { who: "kaelen", text: "¡El ariete! ¡Fuego o golpes contundentes, rápido!" } }, { spawn: ["ariete"] }] },
       ] },
-    "l-capitan": { enemies: ["capitan"], bg: "fortaleza", level: 11, guest: "kaelor",
+    "l-capitan": { enemies: ["capitan"], bg: "fortaleza", level: 9, scale: { atk: 1.7, spd: 1.35 }, guest: "kaelor",
       script: [{ when: { turns: 3 }, actions: [{ say: { who: "kaelor", text: "¡Hondaforja y las Llanuras, juntos! ¡Hoy no cae Rocaeco!" } }, { join: "kaelor" }, { fellowship: 40 }] }] },
   },
   quests: {
@@ -85,6 +86,8 @@ export const CHAPTER3 = {
       { say: ["freya", "Esta noche se decide todo. ¡A la muralla!"] },
       { battle: "l-muralla" },
       { say: ["narrador", "El ariete arde. Pero en la brecha aparece una figura enorme con un hacha negra."] },
+      { say: ["freya", "¡Las curanderas de la aldea suben a la muralla! Vendad las heridas, rápido: aún no ha terminado."] },
+      { heal: true },
       { say: ["draugmar", "Soy Draugmar, capitán del Hierro Negro. Vuestra muralla ya es mía."] },
       { battle: "l-capitan" },
       { say: ["narrador", "Al alba, el Hierro Negro huye por el valle. Por el paso de la montaña bajan los enanos de Hondaforja, guiados por la luz de una lámpara… y por un hombre de capa oscura."] },

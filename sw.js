@@ -1,6 +1,6 @@
 // Offline support: the game files are cached on install; the pixel font is cached the first time it
 // loads. Network first for the game files so updates arrive as soon as you're online.
-const CACHE = "ecos-v3";
+const CACHE = "ecos-v4";
 const FILES = [
   "./", "./index.html", "./styles.css", "./manifest.webmanifest",
   "./js/main.js", "./js/ui.js", "./js/engine.js", "./js/combat.js", "./js/characters.js", "./js/enemies.js", "./js/story.js", "./js/pixelRenderer.js", "./js/sprites.js", "./js/vfx.js",

@@ -4,8 +4,9 @@ export const CHAPTER2 = {
   id: 2,
   start: "m-puerta",
   map: "minas",
-  /** Enemy strength for this chapter (health, attack and speed multipliers). */
-  scale: { hp: 1.5, atk: 2.3, spd: 1.4 },
+  /** Enemy strength for this chapter (health, attack and speed multipliers), tuned for the level a
+   * party reaches by following the story, with no grinding. A battle can override it with its own `scale`. */
+  scale: { hp: 1.2, atk: 1.7, spd: 1.25 },
   title: "Capítulo II · Las Minas de Hondaforja",
   next: "Capítulo III · Las Llanuras Doradas",
   nodes: {
@@ -21,13 +22,13 @@ export const CHAPTER2 = {
       desc: "Un puente de piedra sin barandilla sobre un abismo que arde allá abajo." },
   },
   battles: {
-    "m-emboscada": { enemies: ["trasgo", "trasgo", "trasgo-arquero"], bg: "montana", level: 6,
+    "m-emboscada": { enemies: ["trasgo", "trasgo", "trasgo-arquero"], bg: "montana", level: 5,
       script: [{ when: { turns: 1 }, actions: [{ say: { who: "consejo", text: "Los trasgos de las minas temen la Luz y el Fuego. Elowen y la Flecha Ígnea de Theron harán maravillas." } }] }] },
-    "m-troll": { enemies: ["troll-cueva", "trasgo", "trasgo"], bg: "forja", level: 7,
+    "m-troll": { enemies: ["troll-cueva", "trasgo", "trasgo"], bg: "forja", level: 5, scale: { hp: 1.1, atk: 1.55, spd: 1.2 },
       script: [{ when: { turns: 1 }, actions: [{ say: { who: "bram", text: "¡El troll carga golpes como montañas! Cuando veáis el ⚠, dadle con algo contundente." } }] }] },
-    "m-cangrejo": { enemies: ["cangrejo", "murcielago"], bg: "pozo", level: 7,
+    "m-cangrejo": { enemies: ["cangrejo", "murcielago"], bg: "pozo", level: 6,
       script: [{ when: { turns: 1 }, actions: [{ say: { who: "consejo", text: "El caparazón del Cangrejo resiste filos y flechas. Los golpes contundentes y el fuego lo resquebrajan." } }] }] },
-    "m-coloso": { enemies: ["coloso"], bg: "puente", level: 8, guest: "orven",
+    "m-coloso": { enemies: ["coloso"], bg: "puente", level: 6, scale: { atk: 1.6, spd: 1.25 }, guest: "orven",
       script: [{ when: { turns: 1 }, actions: [{ say: { who: "orven", text: "¡Su núcleo es lava, pero su cuerpo es piedra! Golpeadlo con fuerza… y no le dejéis terminar sus cargas." } }, { join: "orven" }] }] },
   },
   quests: {

@@ -4,8 +4,9 @@ export const CHAPTER4 = {
   id: 4,
   start: "r-muelles",
   map: "rio",
-  /** Enemy strength for this chapter (health, attack and speed multipliers). */
-  scale: { hp: 2.1, atk: 2.4, spd: 1.75 },
+  /** Enemy strength for this chapter (health, attack and speed multipliers), tuned for the level a
+   * party reaches by following the story, with no grinding. A battle can override it with its own `scale`. */
+  scale: { hp: 1.8, atk: 2.1, spd: 1.55 },
   title: "Capítulo IV · La Ciudad Ribereña en Ruinas",
   next: "Capítulo V · El Asedio de la Ciudadela Blanca",
   nodes: {
@@ -21,12 +22,12 @@ export const CHAPTER4 = {
       desc: "El viejo faro de la ciudad. Sobre su cima, una sombra con alas da vueltas sin descanso." },
   },
   battles: {
-    "r-muelles": { enemies: ["corsario", "corsario", "arquero-oscuro"], bg: "rio", level: 12,
+    "r-muelles": { enemies: ["corsario", "corsario", "arquero-oscuro"], bg: "rio", level: 10,
       script: [{ when: { turns: 1 }, actions: [{ say: { who: "consejo", text: "Los corsarios no resisten bien los cortes ni la Luz. Más adelante encontraréis espectros: casi inmunes a las armas, pero no a la magia." } }] }] },
-    "r-puente": { enemies: ["espectro", "espectro", "corsario"], bg: "rio", level: 13,
+    "r-puente": { enemies: ["espectro", "espectro", "corsario"], bg: "rio", level: 11, scale: { hp: 1.55, atk: 1.95, spd: 1.45 },
       script: [{ when: { turns: 1 }, actions: [{ say: { who: "elowen", text: "¡Espectros! El acero los atraviesa sin herirlos. Luz, fuego… o la Runa de Brasa de Bram." } }] }] },
-    "r-biblioteca": { enemies: ["espectro", "bestia-alada"], bg: "biblioteca", level: 13 },
-    "r-morvath": { enemies: ["morvath"], bg: "faro", level: 14, guest: "kaelor",
+    "r-biblioteca": { enemies: ["espectro", "bestia-alada"], bg: "biblioteca", level: 11, scale: { hp: 2.1, atk: 2.35, spd: 1.6 } },
+    "r-morvath": { enemies: ["morvath"], bg: "faro", level: 12, scale: { atk: 1.95, spd: 1.5 }, guest: "kaelor",
       script: [{ when: { turns: 1 }, actions: [{ say: { who: "kaelor", text: "Morvath fue un rey, hace siglos. Hoy es solo un eco de odio. ¡Que la luz lo libere!" } }, { join: "kaelor" }] }] },
   },
   quests: {
